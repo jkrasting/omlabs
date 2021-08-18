@@ -12,30 +12,23 @@ def read(dictArgs):
     return dset
 
 
-def calculate(dset):
-
-    # set default names for variables and coordinates
-    varname = "thetao"
-    zcoord_name = "z_l"
-
-    # perform a time average
-    dset_out = dset.mean(dim="time")
-    thetao = dset_out[varname].load()
-    zcoord = dset[zcoord_name].values
+def _dtdz_max_and_depth(thetao, zcoord_name="z_l"):
+    # get the values for the vertical coordinate
+    zcoord = thetao[zcoord_name].values
 
     # forward fill along z-dimension before taking derivative
-    thetao = thetao.ffill(dim="z_l")
-    dtdz = thetao.fillna(0.0).diff(dim="z_l")
+    thetao = thetao.ffill(dim=zcoord_name)
+    dtdz = thetao.fillna(0.0).diff(dim=zcoord_name)
 
     # take the absolute value of the derivative
     dtdz = np.abs(dtdz)
 
     # the maximum value of the derivative (i.e. thermocline strength)
-    dtdz_max = dtdz.max(dim="z_l")
+    dtdz_max = dtdz.max(dim=zcoord_name)
 
     # get the z-index of the maximum value and use list comprehension
     # to get the corresponding depth of the max value
-    maxind = dtdz.argmax(dim="z_l").values.flatten()
+    maxind = dtdz.argmax(dim=zcoord_name).values.flatten()
     dtdz_depth = np.array([zcoord[x] for x in maxind]).reshape(dtdz_max.shape)
 
     # cast the depth of max value back to an DataArray and mask it
@@ -46,6 +39,17 @@ def calculate(dset):
     dset_out = xr.Dataset()
     dset_out["dtdz_depth"] = dtdz_depth
     dset_out["dtdz_max"] = dtdz_max
+
+    return dset_out
+
+
+def calculate(dset):
+
+    # perform a time average
+    dset_out = dset.mean(dim="time")
+    thetao = dset_out["thetao"].load()
+
+    dset_out = _dtdz_max_and_depth(thetao)
 
     return dset_out
 
