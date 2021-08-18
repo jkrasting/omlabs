@@ -1,3 +1,5 @@
+import xcompare
+
 import xarray as xr
 import numpy as np
 import matplotlib.pyplot as plt
@@ -63,10 +65,11 @@ def calculate(dset, dset_obs):
 
 
 def plot(dset_out, dset_obs_out):
-    plotarr = dset_obs_out["dtdz_depth"]
-    fig = plt.figure()
-    plt.pcolormesh(plotarr, vmin=0.0, vmax=1000.0)
-    plt.colorbar()
+    results = xcompare.compare_datasets(dset_out, dset_obs_out)
+    fig = [
+        xcompare.plot_three_panel(results, "dtdz_max"),
+        xcompare.plot_three_panel(results, "dtdz_depth"),
+    ]
 
     return fig
 
