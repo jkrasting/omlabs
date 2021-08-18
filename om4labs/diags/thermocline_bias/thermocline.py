@@ -9,7 +9,8 @@ def parse():
 
 def read(dictArgs):
     dset = xr.open_mfdataset(dictArgs["infile"], use_cftime=True)
-    return dset
+    dset_obs = xr.open_dataset(dictArgs["obsfile"], decode_times=False)
+    return dset, dset_obs
 
 
 def _dtdz_max_and_depth(thetao, zcoord_name="z_l"):
@@ -43,19 +44,23 @@ def _dtdz_max_and_depth(thetao, zcoord_name="z_l"):
     return dset_out
 
 
-def calculate(dset):
+def calculate(dset, dset_obs):
 
     # perform a time average
-    dset_out = dset.mean(dim="time")
-    thetao = dset_out["thetao"].load()
+    dset = dset.mean(dim="time").squeeze()
+    dset_obs = dset_obs.mean(dim="time").squeeze()
 
+    thetao = dset["thetao"].load()
     dset_out = _dtdz_max_and_depth(thetao)
 
-    return dset_out
+    ptemp = dset_obs["ptemp"].load()
+    dset_obs_out = _dtdz_max_and_depth(ptemp)
+
+    return dset_out, dset_obs_out
 
 
-def plot(dset_out):
-    plotarr = dset_out["dtdz_depth"]
+def plot(dset_out, dset_obs_out):
+    plotarr = dset_obs_out["dtdz_depth"]
     fig = plt.figure()
     plt.pcolormesh(plotarr, vmin=0.0, vmax=1000.0)
     plt.colorbar()
@@ -64,9 +69,9 @@ def plot(dset_out):
 
 
 def run():
-    dset = read(dictArgs)
-    dset_out = compute(dset)
-    fig = plot(dset_out)
+    dset, dset_obs = read(dictArgs)
+    dset_out, dset_obs_out = calculate(dset, dset_obs)
+    fig = plot(dset_out, dset_obs_out)
 
     return
 
