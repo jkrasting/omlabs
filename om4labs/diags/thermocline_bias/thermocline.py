@@ -32,8 +32,11 @@ def _dtdz_max_and_depth(thetao, zcoord_name="z_l"):
     maxind = dtdz.argmax(dim=zcoord_name).values.flatten()
     dtdz_depth = np.array([zcoord[x] for x in maxind]).reshape(dtdz_max.shape)
 
-    # cast the depth of max value back to an DataArray and mask it
+    # cast the depth of max value back to an DataArray
     dtdz_depth = xr.DataArray(dtdz_depth, coords=dtdz_max.coords)
+
+    # reapply masks
+    dtdz_max = xr.where(thetao.isel({zcoord_name: 0}).isnull(), np.nan, dtdz_max)
     dtdz_depth = xr.where(thetao.isel({zcoord_name: 0}).isnull(), np.nan, dtdz_depth)
 
     # package all fields up in an xr.Dataset() object
