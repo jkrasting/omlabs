@@ -4,9 +4,24 @@ import xarray as xr
 import numpy as np
 import matplotlib.pyplot as plt
 
+from om4labs.om4common import image_handler
+from om4labs.om4common import open_intake_catalog
+from om4labs.om4parser import default_diag_parser
+
 
 def parse(cliargs=None, template=False):
     description = """Plot thermocline strength and depth of maximum"""
+
+    parser = default_diag_parser(description=description, template=template)
+
+    parser.add_argument(
+        "--dataset",
+        type=str,
+        required=False,
+        default="WOA13_annual_TS",
+        help="Name of the observational dataset, \
+              as provided in intake catalog",
+    )
 
     if template is True:
         return parser.parse_args(None).__dict__
@@ -16,7 +31,17 @@ def parse(cliargs=None, template=False):
 
 def read(dictArgs):
     dset = xr.open_mfdataset(dictArgs["infile"], use_cftime=True)
-    dset_obs = xr.open_dataset(dictArgs["obsfile"], decode_times=False)
+
+    if dictArgs["obsfile"] is not None:
+        # priority to user-provided obs file
+        dset_obs = xr.open_mfdataset(
+            dictArgs["obsfile"], combine="by_coords", decode_times=False
+        )
+    else:
+        # use dataset from catalog, either from command line or default
+        cat = open_intake_catalog(dictArgs["platform"], "obs")
+        dset_obs = cat[dictArgs["dataset"]].to_dask()
+
     return dset, dset_obs
 
 
@@ -79,7 +104,7 @@ def plot(dset_out, dset_obs_out):
     return figs
 
 
-def run():
+def run(dictArgs):
     # set visual backend
     if dictArgs["interactive"] is False:
         plt.switch_backend("Agg")
