@@ -5,8 +5,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def parse():
-    return
+def parse(cliargs=None, template=False):
+    description = """Plot thermocline strength and depth of maximum"""
+
+    if template is True:
+        return parser.parse_args(None).__dict__
+    else:
+        return parser.parse_args(cliargs)
 
 
 def read(dictArgs):
@@ -66,21 +71,40 @@ def calculate(dset, dset_obs):
 
 def plot(dset_out, dset_obs_out):
     results = xcompare.compare_datasets(dset_out, dset_obs_out)
-    fig = [
+    figs = [
         xcompare.plot_three_panel(results, "dtdz_max"),
         xcompare.plot_three_panel(results, "dtdz_depth"),
     ]
 
-    return fig
+    return figs
 
 
 def run():
+    # set visual backend
+    if dictArgs["interactive"] is False:
+        plt.switch_backend("Agg")
+
     dset, dset_obs = read(dictArgs)
     dset_out, dset_obs_out = calculate(dset, dset_obs)
-    fig = plot(dset_out, dset_obs_out)
+    figs = plot(dset_out, dset_obs_out)
 
-    return
+    filenames = [
+        f"{dictArgs['outdir']}/thermocline.dtdz_max",
+        f"{dictArgs['outdir']}/thermocline.dtdz_depth",
+    ]
+
+    imgbufs = image_handler(figs, dictArgs, filename=filenames)
+
+    return imgbufs
 
 
-def parse_and_run():
-    return
+def parse_and_run(cliargs=None):
+    """Function to make compatibile with the superwrapper"""
+    args = parse(cliargs)
+    args = args.__dict__
+    imgbuf = run(args)
+    return imgbuf
+
+
+if __name__ == "__main__":
+    parse_and_run()
