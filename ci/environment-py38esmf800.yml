@@ -17,6 +17,7 @@ dependencies:
   - palettable
   - pip
   - pip:
+    - momlevel
     - git+https://github.com/jkrasting/cmip_basins.git
     - git+https://github.com/jkrasting/xcompare.git
     - git+https://github.com/raphaeldussin/static_downsampler.git

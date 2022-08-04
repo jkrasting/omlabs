@@ -4,6 +4,7 @@ dask
 gsw
 intake-xarray
 matplotlib
+momlevel
 netcdf4
 numpy
 numba
