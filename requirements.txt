@@ -5,10 +5,12 @@ intake
 numpy
 matplotlib
 palettable
+regionmask
 scipy
 static_downsampler
 xarray
 xcompare
 xesmf
+xgcm
 xoverturning
 xwavelet
